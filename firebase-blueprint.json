@@ -1,0 +1,151 @@
+{
+  "entities": {
+    "Empresa": {
+      "title": "Empresa",
+      "description": "Configurações institucionais e regras de agendamento da empresa",
+      "type": "object",
+      "properties": {
+        "nome": { "type": "string", "maxLength": 100 },
+        "telefone": { "type": "string", "maxLength": 30 },
+        "endereco": { "type": "string", "maxLength": 200 },
+        "mensagem": { "type": "string", "maxLength": 300 },
+        "duracao_min": { "type": "number" },
+        "vagas_por_horario": { "type": "number" },
+        "antecedencia_horas": { "type": "number" },
+        "atende_domicilio": { "type": "boolean" }
+      },
+      "required": ["nome", "duracao_min", "vagas_por_horario", "antecedencia_horas", "atende_domicilio"]
+    },
+    "HorarioAtendimento": {
+      "title": "HorarioAtendimento",
+      "description": "Configuração de horários por dia da semana (0=Dom a 6=Sab)",
+      "type": "object",
+      "properties": {
+        "dia_semana": { "type": "number" },
+        "ativo": { "type": "boolean" },
+        "inicio": { "type": "string", "maxLength": 5 },
+        "fim": { "type": "string", "maxLength": 5 },
+        "pausa_inicio": { "type": "string", "maxLength": 5 },
+        "pausa_fim": { "type": "string", "maxLength": 5 }
+      },
+      "required": ["dia_semana", "ativo", "inicio", "fim"]
+    },
+    "Produto": {
+      "title": "Produto",
+      "description": "Produtos de consultoria de crédito disponíveis",
+      "type": "object",
+      "properties": {
+        "slug": { "type": "string", "maxLength": 50 },
+        "nome": { "type": "string", "maxLength": 100 },
+        "subtitulo": { "type": "string", "maxLength": 200 },
+        "resumo": { "type": "string", "maxLength": 500 },
+        "para_quem": { "type": "string", "maxLength": 500 },
+        "documentos": { "type": "string", "maxLength": 500 },
+        "icone": { "type": "string", "maxLength": 50 },
+        "ordem": { "type": "number" },
+        "ativo": { "type": "boolean" },
+        "atende_domicilio": { "type": "boolean" }
+      },
+      "required": ["slug", "nome", "ativo", "atende_domicilio"]
+    },
+    "Cliente": {
+      "title": "Cliente",
+      "description": "Perfil de dados cadastrais do cliente",
+      "type": "object",
+      "properties": {
+        "usuario_id": { "type": "string", "maxLength": 128 },
+        "nome": { "type": "string", "maxLength": 150 },
+        "telefone": { "type": "string", "maxLength": 30 },
+        "cpf": { "type": "string", "maxLength": 20 },
+        "email": { "type": "string", "maxLength": 150 },
+        "criado_em": { "type": "string" },
+        "atualizado_em": { "type": "string" }
+      },
+      "required": ["usuario_id", "nome", "telefone", "cpf", "email"]
+    },
+    "Agendamento": {
+      "title": "Agendamento",
+      "description": "Pedido de atendimento agendado pelo cliente",
+      "type": "object",
+      "properties": {
+        "cliente_id": { "type": "number" },
+        "usuario_id": { "type": "string", "maxLength": 128 },
+        "produto_id": { "type": "number" },
+        "data_agendada": { "type": "string", "maxLength": 10 },
+        "hora": { "type": "string", "maxLength": 5 },
+        "local_tipo": { "type": "string", "enum": ["PRESENCIAL", "DOMICILIO"] },
+        "cep": { "type": "string", "maxLength": 15 },
+        "logradouro": { "type": "string", "maxLength": 150 },
+        "numero": { "type": "string", "maxLength": 30 },
+        "complemento": { "type": "string", "maxLength": 50 },
+        "bairro": { "type": "string", "maxLength": 80 },
+        "cidade": { "type": "string", "maxLength": 80 },
+        "uf": { "type": "string", "maxLength": 2 },
+        "referencia": { "type": "string", "maxLength": 200 },
+        "observacao": { "type": "string", "maxLength": 400 },
+        "status": { "type": "string", "enum": ["PENDENTE", "CONFIRMADO", "SUGERIDO", "RECUSADO", "CANCELADO"] },
+        "nova_data": { "type": "string", "maxLength": 10 },
+        "nova_hora": { "type": "string", "maxLength": 5 },
+        "mensagem_consultor": { "type": "string", "maxLength": 400 },
+        "criado_em": { "type": "string" },
+        "atualizado_em": { "type": "string" }
+      },
+      "required": ["usuario_id", "produto_id", "data_agendada", "hora", "local_tipo", "status"]
+    },
+    "Documento": {
+      "title": "Documento",
+      "description": "Foto/documento anexado a um pedido",
+      "type": "object",
+      "properties": {
+        "agendamento_id": { "type": "number" },
+        "usuario_id": { "type": "string", "maxLength": 128 },
+        "nome": { "type": "string", "maxLength": 100 },
+        "mime": { "type": "string", "maxLength": 30 },
+        "conteudo": { "type": "string", "maxLength": 500000 },
+        "criado_em": { "type": "string" }
+      },
+      "required": ["agendamento_id", "usuario_id", "conteudo"]
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Usuários autorizados como consultores / administradores",
+      "type": "object",
+      "properties": {
+        "usuario_id": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 150 },
+        "criado_em": { "type": "string" }
+      },
+      "required": ["usuario_id", "email"]
+    }
+  },
+  "firestore": {
+    "/empresa/{empresaId}": {
+      "schema": { "$ref": "#/entities/Empresa" },
+      "description": "Dados da empresa"
+    },
+    "/horarios/{diaId}": {
+      "schema": { "$ref": "#/entities/HorarioAtendimento" },
+      "description": "Horários de expediente"
+    },
+    "/produtos/{produtoId}": {
+      "schema": { "$ref": "#/entities/Produto" },
+      "description": "Catálogo de produtos"
+    },
+    "/clientes/{clienteId}": {
+      "schema": { "$ref": "#/entities/Cliente" },
+      "description": "Perfis dos clientes"
+    },
+    "/agendamentos/{agendamentoId}": {
+      "schema": { "$ref": "#/entities/Agendamento" },
+      "description": "Pedidos de agendamento"
+    },
+    "/agendamentos/{agendamentoId}/documentos/{documentoId}": {
+      "schema": { "$ref": "#/entities/Documento" },
+      "description": "Documentos e fotos do pedido"
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/Admin" },
+      "description": "Lista de consultores autorizados"
+    }
+  }
+}

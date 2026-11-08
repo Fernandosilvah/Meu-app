@@ -1,0 +1,83 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Pillar 1)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Hardened Global Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isUser(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isOwner(uid) {
+      return isUser(uid);
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == 'fernandotarginodasilva@gmail.com'
+      );
+    }
+
+    // Empresa (Configurações da empresa)
+    match /empresa/{empresaId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Horários de atendimento
+    match /horarios/{diaId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Catálogo de produtos
+    match /produtos/{produtoId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Consultores / Admins
+    match /admins/{adminId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Cadastro de Clientes (PII Protection)
+    match /clientes/{clienteId} {
+      allow get: if isOwner(resource.data.usuario_id) || isAdmin();
+      allow list: if isAdmin() || (isSignedIn() && resource.data.usuario_id == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.usuario_id == request.auth.uid;
+      allow update: if isOwner(resource.data.usuario_id) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Agendamentos de atendimento
+    match /agendamentos/{agendamentoId} {
+      allow get: if isOwner(resource.data.usuario_id) || isAdmin();
+      allow list: if isAdmin() || (isSignedIn() && resource.data.usuario_id == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.usuario_id == request.auth.uid;
+      allow update: if isAdmin() || (
+        isOwner(resource.data.usuario_id) &&
+        request.resource.data.usuario_id == resource.data.usuario_id
+      );
+      allow delete: if isAdmin();
+
+      // Documentos e fotos anexados ao agendamento
+      match /documentos/{documentoId} {
+        allow get: if isOwner(resource.data.usuario_id) || isAdmin();
+        allow list: if isAdmin() || (isSignedIn() && resource.data.usuario_id == request.auth.uid);
+        allow create: if isSignedIn() && request.resource.data.usuario_id == request.auth.uid;
+        allow update, delete: if isAdmin();
+      }
+    }
+  }
+}

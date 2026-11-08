@@ -1,0 +1,562 @@
+Você é um engenheiro full stack sênior. Recrie, exatamente como descrito abaixo, um aplicativo web mobile first de agendamento para uma empresa de consultoria de crédito. Todo texto visível fica em português do Brasil, com acentos corretos. Não use emojis na interface; use ícones de linha (biblioteca lucide-react). Não mencione a plataforma onde o app roda em nenhum texto da interface.
+
+Plataforma-alvo:
+
+Front-end React com TypeScript, Vite, Tailwind 4 e roteamento por BrowserRouter.
+Banco PostgreSQL.
+Todo acesso a dados passa por funções de servidor em SQL, uma instrução por função, com parâmetros convertidos explicitamente.
+Login pronto da plataforma: Google, Microsoft e código por e-mail. Não crie tabela própria de usuários nem senha própria.
+1. Objetivo e público
+Objetivo. Substituir o agendamento por conversa avulsa por um fluxo curto no celular. O cliente conhece os produtos de crédito, escolhe produto, dia, hora e local (na empresa ou em casa), anexa fotos dos documentos e acompanha o pedido. O consultor recebe os pedidos e confirma, recusa ou sugere outro horário. A empresa define seus dias e horários de atendimento.
+
+Público.
+
+Cliente final: muitas vezes aposentado, pensionista, servidor público ou beneficiário de programas sociais, com pouca familiaridade com tecnologia. Por isso: passos curtos, botões grandes, texto claro, uma decisão por tela.
+Consultor: pessoa da empresa que analisa e responde os pedidos e configura o atendimento.
+Princípios de produto.
+
+Uso exclusivo em celular. A interface fica numa coluna central de largura máxima equivalente a max-w-lg, mesmo em tela grande.
+Visual limpo, moderno e confiável, baseado na logo da empresa: letra "S" estilizada em azul vivo e branco sobre azul-marinho escuro.
+Nome da empresa exibido: CREDMAISPLUS (editável nas configurações).
+Botões primários com 56 px de altura, secundários com 48 px, campos com 48 px. Alvos de toque nunca abaixo de 40 px.
+2. Páginas, rotas e componentes visuais
+2.1 Identidade visual (tokens)
+Tema. Claro apenas (o tema escuro existe no CSS mas não é usado).
+
+Cores, em variáveis de CSS. Nenhuma cor é escrita direto nos componentes.
+
+Azul de ação (primary): #1A5FD6.
+Hover da ação: #1450B8.
+Texto sobre a ação (on-primary): branco.
+Texto e ícone na cor da marca (primary-text): #1A5FD6.
+Fundo suave da marca (primary-bg): #E8F0FD.
+Azul-marinho (navy): #061A45.
+Azul-marinho suave (navy-soft): #0D2A66, usado em hover.
+Texto sobre o marinho (on-navy): branco.
+Fundo da página: #F3F6FC.
+Superfície de cartões: #FDFDFE.
+Borda: #E3E6EC.
+Texto: #0D0F14.
+Texto secundário: #5B6472.
+Sucesso: texto #0F7A52, fundo #E9F7F1, borda #A9DFC7.
+Perigo: texto #C62F2A, fundo #FDF0EF, borda #F6C3C0.
+Aviso: texto #9A6A0F, fundo #FDF6E7, borda #F0DBA6.
+Informação: texto #1F66C4, fundo #EEF4FD, borda #C3D8F7.
+Tipografia.
+
+Fonte Figtree, corpo em 14 px.
+Título de página: 24 px, peso 600.
+Título de seção e de cartão: 16 px, peso 600.
+Tamanho 12 px só para metadados raros.
+Forma e elevação.
+
+Raios: 9, 12, 18 e 24 px.
+Cartão sem borda, com sombra suave.
+Logo. Embutida no código como imagem em data-URI (SVG ou imagem embutida), porque binários não sobem no deploy. Usada em:
+
+cabeçalho (32 px);
+bloco de boas-vindas da Início (48 px);
+tela de login;
+ícone da aba do navegador.
+Título da aba do navegador. Nome da empresa.
+
+2.2 Estrutura geral (shell da área logada)
+Tela inteira na altura da janela, coluna central de largura máxima lg, fundo da página.
+Cabeçalho fixo, altura 56 px, fundo azul-marinho, texto branco:
+logo à esquerda;
+nome da empresa (cortado com reticências se longo);
+botão "Sair" com ícone de saída, 40 px de altura, que encerra a sessão e leva a /login.
+Conteúdo central rola por conta própria. O cabeçalho e a barra inferior nunca rolam junto.
+Barra de navegação inferior fixa, altura 64 px, com ícone e rótulo:
+Início (casa);
+Agendar (calendário com mais);
+Pedidos (prancheta);
+Perfil (usuário);
+Consultor (escudo), só para quem é consultor.
+O item ativo tem fundo primary-bg, texto primary-text e peso 600. Os demais usam texto secundário.
+Cliente sem cadastro: a barra inferior some e o conteúdo é a tela de Cadastro (2.4). Isso vale mesmo que ele tente abrir outra rota.
+Carregamento da sessão: tela azul-marinho com indicador giratório branco. Se a carga falhar, mostra "Não foi possível abrir o aplicativo", o motivo e o botão "Tentar de novo".
+2.3 Rotas
+Rotas públicas:
+
+/login: se já logado, redireciona para /.
+/reset-password: tela de redefinição de senha da plataforma, mantida mesmo com a senha desligada.
+Rotas logadas:
+
+/: Início.
+/produto/:slug: página do produto.
+/agendar: assistente de agendamento. Aceita ?produto=<slug> para pular o passo 1.
+/pedidos: lista do cliente.
+/pedidos/:id: detalhe do pedido.
+/perfil: meus dados.
+/consultor: painel do consultor.
+/consultor/configuracoes: configurações.
+/consultor/:id: pedido sob a ótica do consultor.
+Qualquer outra rota volta para /.
+Rotas sem login: qualquer rota leva a /login.
+
+Rotas de consultor: se um não consultor abrir /consultor..., é redirecionado para /.
+
+2.4 Tela de Login (/login)
+Primeira impressão, desenhada de verdade:
+
+Fundo azul-marinho com a logo grande.
+Nome CREDMAISPLUS e subtítulo do que o sistema faz.
+Frase de destaque: "Agende pelo app e vamos até você".
+Botões grandes de entrada com Google e Microsoft.
+Bloco de código por e-mail:
+o cliente digita o e-mail e recebe um código de 6 dígitos;
+digita o código para entrar;
+o link do mesmo e-mail também conclui a entrada;
+o bloco só aparece se o login por e-mail estiver ligado nas configurações do app.
+Mensagem de "somente convidados", se o cadastro aberto for desligado.
+Mensagens de erro de login distintas, nunca uma frase genérica.
+Idioma dos e-mails de código: português do Brasil.
+Não há botão de Facebook. A plataforma não oferece esse método, só Google, Microsoft, código por e-mail e senha.
+2.5 Tela de Cadastro (primeiro acesso de cliente)
+Título "Vamos nos conhecer"; texto "Preencha seus dados uma única vez. Depois é só escolher o dia e a hora."
+Formulário de dados do cliente (2.12). Botão "Continuar".
+O e-mail vem preenchido com o e-mail da conta que entrou.
+Ao salvar: aviso "Cadastro salvo." e vai para /.
+Aparece automaticamente no lugar do conteúdo, e também dentro do assistente de agendamento se o perfil faltar.
+2.6 Início (/)
+Bloco de boas-vindas em azul-marinho, cantos arredondados, com:
+logo de 48 px;
+"Olá, {primeiro nome}!" em 24 px (apenas "Olá!" se não houver nome);
+a mensagem de boas-vindas configurada pela empresa;
+botão grande "Agendar atendimento" com ícone, que leva a /agendar;
+duas linhas de apoio:
+"Escolha o dia e a hora em poucos toques" (relógio);
+"Atendemos na empresa ou na sua casa" (pino de mapa), só se a empresa atende em domicílio.
+Lista "Nossos produtos de crédito":
+cartões clicáveis, um por produto ativo, na ordem definida;
+cada cartão tem ícone do produto num quadrado de 48 px com fundo primary-bg, nome em negrito, subtítulo em texto secundário e seta à direita;
+produtos que atendem em casa mostram o selo "Atende em casa" (2.14);
+cada cartão leva a /produto/{slug};
+há esqueleto de carregamento e bloco de erro com opção de tentar de novo.
+2.7 Produto (/produto/:slug)
+Botão "Voltar" (para / se não houver histórico), título = nome, subtítulo.
+Ícone grande (64 px) em quadrado primary-bg, e o selo "Atende em casa" se aplicável.
+Três cartões:
+"Como funciona": resumo do produto.
+"Para quem serve": com ícone de pessoas.
+"O que você precisa levar": lista com ícone de verificado verde para cada documento.
+Botão grande "Agendar este atendimento", que leva a /agendar?produto={slug}.
+Slug inexistente volta para /.
+2.8 Assistente de Agendamento (/agendar)
+Cinco passos, com título de cada passo na ordem: Produto, Dia e hora, Local, Documentos, Revisar. Um indicador de progresso mostra o passo atual.
+
+Regras de navegação:
+
+Cada passo é uma entrada do histórico do navegador (estado guardado na navegação).
+Voltar do celular, ou o botão "Voltar", retorna ao passo anterior sem sair do app.
+Se não há produto escolhido, o assistente fica sempre no passo 1.
+Se o cliente abre com ?produto=slug, o produto é selecionado e o assistente pula para o passo 2.
+Rodapé fixo de cada passo: "Voltar" (secundário, 56 px, a partir do passo 2) e "Continuar" (primário, 56 px, proporção 1:2).
+Passo 1, Produto:
+
+Lista de cartões de produto, com ícone, nome, subtítulo e selo "Atende em casa" quando aplicável.
+Selecionar avança.
+Avançar sem escolher mostra o erro "Escolha um produto para continuar."
+Passo 2, Dia e hora (seletor reutilizado, 2.13):
+
+Faixa horizontal de cartões de dia (80×96 px) para os próximos 28 dias em que há atendimento.
+Cada cartão mostra dia da semana curto, número do dia e mês curto.
+Escolher um dia mostra a grade de horas, em três colunas.
+É obrigatório escolher dia e hora para continuar.
+Passo 3, Local:
+
+Duas opções grandes: "Na empresa" (ícone de prédio) e "Em casa" (ícone de casa).
+"Em casa" só fica disponível quando a empresa atende em domicílio E o produto escolhido atende em domicílio. Caso contrário a opção aparece desabilitada, com texto explicando.
+Se o cliente trocar para um produto que não atende em casa, o local volta para "Na empresa".
+Na empresa: mostra o endereço e o telefone da empresa.
+Em casa: formulário de endereço completo:
+CEP com máscara 00000-000: ao completar 8 dígitos, consulta a API pública ViaCEP e preenche rua, bairro, cidade e UF (só os campos vazios; falha silenciosa);
+rua;
+número;
+complemento (opcional);
+bairro;
+cidade;
+UF (2 letras, maiúsculas);
+ponto de referência, com exemplo "portão azul, perto da padaria".
+Validações do endereço, com mensagens sob cada campo:
+CEP: "Digite o CEP com 8 números."
+Rua: "Digite a rua."
+Número: "Digite o número."
+Bairro: "Digite o bairro."
+Cidade: "Digite a cidade."
+UF: "Use 2 letras."
+Referência: "Conte um ponto de referência."
+Passo 4, Documentos (opcional):
+
+Texto: "Fotos dos seus documentos. Adiantam o atendimento. Fotografe com boa luz e sem cortar as bordas. Se preferir, pule este passo."
+Cartão "Para {produto}" com a lista de documentos do produto, cada um com ícone de verificado.
+Botão grande de foto (câmera ou galeria, vários arquivos).
+Miniaturas em três colunas, quadradas, cada uma com botão redondo de remover.
+Máximo de 6 fotos. Ao exceder: "Você pode anexar até 6 fotos."
+Cada foto é redimensionada no aparelho: lado maior até 1400 px, JPEG com qualidade 0,72, guardada como texto (data URL).
+O botão principal diz "Pular" se não houver foto e "Continuar" se houver.
+Passo 5, Revisar:
+
+Cartão com Produto, Dia (por extenso, ex.: "Segunda-feira, 10 de novembro"), Hora e Local ("Em casa" ou "Na empresa").
+Se for em casa: Endereço montado (rua, número, complemento, bairro, cidade/UF, CEP) e Referência.
+Quantidade de fotos ("Nenhuma" ou "N anexada(s)").
+Campo opcional "Quer avisar algo ao consultor?" (até 400 caracteres).
+Botão "Enviar pedido" (muda para "Enviando...").
+Ao enviar: cria o pedido e, em seguida, anexa cada foto ao pedido criado. Depois leva para o detalhe do pedido com aviso de sucesso.
+Se o horário foi tomado por outra pessoa no meio tempo, o servidor recusa. O app mostra mensagem de que o horário não está mais disponível e volta ao passo de escolha com a lista atualizada.
+2.9 Meus pedidos (/pedidos)
+Título "Meus pedidos", subtítulo "Acompanhe o andamento de cada atendimento."
+Lista paginada com rolagem infinita, 10 por página, mais recentes primeiro.
+Cada pedido é um cartão (2.15) com produto, data, hora, local e etiqueta de status; leva a /pedidos/{id}.
+Estado vazio: ícone, "Você ainda não tem pedidos", "Escolha um produto, o dia e a hora. Leva menos de 2 minutos." e botão "Agendar agora".
+2.10 Detalhe do pedido do cliente (/pedidos/:id)
+Botão "Voltar" (volta ao histórico ou vai para /pedidos).
+Cartão principal:
+etiqueta de status e "Pedido nº N";
+frase de ajuda do status (tabela 3.3);
+Dia e hora ("Segunda-feira, 10 de novembro às 14:00");
+Local;
+se for em casa: endereço em várias linhas com ícone de pino e "Referência: ...".
+"Recado do consultor": só aparece se houver mensagem.
+"Horário sugerido": só no status SUGERIDO. Mostra o novo dia e hora, com botão primário "Aceitar este horário" (56 px) e secundário "Prefiro escolher outro dia", que leva a /agendar.
+"Documentos enviados": miniaturas das fotos do pedido. Se o pedido ainda está ativo, há botão "Adicionar mais fotos".
+"Cancelar pedido": botão secundário, visível só enquanto o pedido está ativo (PENDENTE, CONFIRMADO ou SUGERIDO).
+Abre uma janela de confirmação: "Tem certeza que quer cancelar este pedido? Você poderá fazer um novo quando quiser.", com botão "Sim, cancelar".
+A janela é uma entrada do histórico. Voltar do celular fecha a janela sem sair da tela.
+Pedido inexistente, ou de outra pessoa, volta para /pedidos.
+2.11 Perfil (/perfil)
+Título "Meus dados", subtítulo "Mantenha seu contato atualizado."
+Cartão com o formulário de dados do cliente (2.12), botão "Salvar dados" e aviso "Dados salvos."
+2.12 Formulário de dados do cliente
+Campos, todos com 48 px de altura:
+
+Nome completo. Exige pelo menos duas palavras. Erro: "Digite seu nome completo."
+Telefone com DDD. Máscara (11) 99999-9999, teclado numérico. Aceita 10 ou 11 dígitos. Erro: "Digite um telefone com DDD."
+CPF. Máscara 000.000.000-00, teclado numérico. Validação completa dos dígitos verificadores, rejeitando sequências repetidas. Erro: "Esse CPF não parece válido."
+E-mail. Formato válido. Erro: "Digite um e-mail válido."
+Salvar cria ou atualiza o cadastro do usuário logado. Existe um único cadastro por usuário.
+
+2.13 Seletor de dia e hora (componente reutilizado)
+Usado no assistente (passo 2) e no consultor ao sugerir novo horário.
+
+Busca os horários de atendimento e a contagem de agendamentos ocupados dos próximos 28 dias (hoje até hoje+28).
+Para cada dia, gera as horas disponíveis:
+o dia da semana precisa estar ativo;
+horas começam no início do expediente e andam de duração em duração minutos (duração padrão 30; se a configurada for menor que 5, usa 30);
+uma hora só entra se ela mais a duração couberem antes do fim do expediente;
+horas que se sobrepõem à pausa do dia são removidas;
+horas anteriores a "agora mais a antecedência mínima (em horas)" são removidas.
+Dias sem nenhuma hora disponível não aparecem.
+Uma hora fica desabilitada (opaca, riscada, cursor proibido) quando a contagem de pedidos PENDENTE e CONFIRMADO naquele dia e hora já atinge o número de vagas por horário.
+Sem nenhum dia disponível: "Não há horários disponíveis nos próximos dias. Fale com a nossa equipe."
+Carregando: "Buscando horários..." Erro: bloco com "Tentar de novo".
+A grade de horas tem três colunas, botões de 48 px. Dia e hora selecionados ficam em azul de ação com texto branco.
+2.14 Selo "Atende em casa"
+Pequena etiqueta com ícone de casa e o texto "Atende em casa", na cor da marca. Aparece em cartões de produto, na página do produto e nas opções do assistente.
+
+2.15 Cartão de pedido
+Ícone do produto, nome do produto, "dia curto, hora" (ex.: "Seg., 10 nov. · 14:00"), local ("Em casa" ou "Na empresa") e etiqueta de status.
+Na versão do consultor, mostra também o nome do cliente.
+Linha inteira clicável, com troca de fundo ao passar o dedo ou mouse.
+2.16 Painel do consultor (/consultor)
+Título "Painel do consultor", subtítulo "Analise os pedidos e responda aos clientes."
+Botão secundário largo "Configurar atendimento" com ícone de engrenagem, que leva a /consultor/configuracoes.
+Abas em formato de pílula, com rolagem horizontal se não couberem: Novos (PENDENTE), Confirmados, Sugeridos e Todos. As três primeiras mostram a contagem entre parênteses, quando maior que zero. A aba ativa fica em azul de ação com texto branco.
+Lista paginada com rolagem infinita, 10 por página.
+Ordenação: pedidos PENDENTE primeiro; dentro de cada grupo, por data e hora crescentes.
+Cada item é um cartão de pedido com o nome do cliente, e leva a /consultor/{id}.
+Vazio: "Nenhum pedido aqui" com texto "Não há pedidos com o status {status}." (ou "Ainda não chegou nenhum pedido." na aba Todos).
+2.17 Pedido sob a ótica do consultor (/consultor/:id)
+Cartão do pedido: etiqueta de status e "Pedido nº N", "Dia e hora pedidos", "Horário sugerido ao cliente" (quando SUGERIDO), Local ("Em casa do cliente" ou "Na empresa"), endereço com referência e "Recado do cliente" (se houver).
+Cartão "Cliente": nome, telefone, e-mail e CPF, mais o botão "Chamar no WhatsApp". Esse botão abre wa.me/55{telefone} e só aparece com telefone de pelo menos 10 dígitos.
+Cartão "Documentos enviados": miniaturas das fotos, com ampliação ao tocar.
+Cartão "Sua resposta": aparece apenas enquanto o pedido está em aberto (PENDENTE, SUGERIDO ou CONFIRMADO).
+Campo opcional "Recado para o cliente (opcional)", até 400 caracteres.
+Botões: "Confirmar atendimento" (primário, oculto se já CONFIRMADO), "Sugerir outro horário" (secundário) e "Recusar pedido" (perigo).
+"Sugerir outro horário" muda a tela para o modo de sugestão, que é uma entrada do histórico. Nesse modo aparece o seletor de dia e hora, o botão "Enviar novo horário" e "Voltar".
+Confirmar ou recusar: aviso de sucesso e volta para a tela anterior (ou para /consultor).
+Enviar novo horário: aviso "Novo horário enviado ao cliente."
+2.18 Configurações (/consultor/configuracoes)
+Título "Configurar atendimento", botão de voltar para /consultor. Só consultor acessa. Três abas em pílula: Horários, Empresa, Equipe.
+
+Aba Horários:
+
+Texto: "Marque os dias em que você atende e defina o horário de cada um. A pausa é opcional."
+Sete cartões (Domingo a Sábado), cada um com caixa de seleção do dia.
+Se o dia está marcado, aparecem quatro campos de hora: Início, Fim, Pausa de, Pausa até.
+Validação: em dia ativo, o início deve ser antes do fim. Erro: "{Dia}: a hora de início deve ser antes do fim."
+Botão "Salvar horários" (56 px) e aviso "Horários salvos."
+A gravação substitui os sete dias de uma vez.
+Aba Empresa:
+
+Campos: nome da empresa, telefone, endereço do escritório, mensagem de boas-vindas (até 200 caracteres).
+Três campos numéricos lado a lado: Duração (min), Vagas (por horário) e Antecedência (h).
+Caixa "Atendo na casa do cliente".
+Botão "Salvar dados" e aviso "Dados da empresa salvos."
+Ao salvar, a sessão local é atualizada (o nome muda no cabeçalho sem recarregar).
+Aba Equipe:
+
+Texto: "Consultores veem os pedidos e configuram o atendimento. A pessoa precisa já ter entrado no aplicativo."
+Campo "E-mail do novo consultor" e botão "Dar acesso de consultor".
+Se o e-mail não existe entre as pessoas que já entraram: "Não encontramos esse e-mail. A pessoa precisa entrar no aplicativo uma vez antes."
+Lista de consultores com o e-mail e "(você)" no próprio. O botão de lixeira para remover acesso aparece em todos menos em você, e a remoção é imediata na tela, com reversão e aviso de erro se falhar.
+2.19 Componentes de apoio
+Avisos (toasts) de sucesso e erro, não bloqueantes.
+Esqueleto de carregamento só na primeira carga de cada bloco.
+Bloco de erro com mensagem e botão "Tentar de novo".
+Estado vazio com ícone, título, texto e ação opcional.
+Etiqueta de status com cor por situação.
+Janela de confirmação padrão.
+Caixa de seleção e campos com altura de 48 px nos formulários.
+Botão de foto, que abre câmera ou galeria e aceita vários arquivos. Mostra estado ocupado enquanto comprime.
+Lista de fotos do pedido (carrega do servidor e atualiza quando novas são anexadas).
+Guarda de saída (3.9).
+3. Fluxos e regras de negócio
+3.1 Primeiro acesso do cliente
+Abre o link, vê o login e entra por Google, Microsoft ou código por e-mail.
+Como o cadastro aberto está ligado, uma pessoa nova cria a conta sozinha.
+Sem cadastro de cliente, vê a tela de Cadastro.
+Preenche nome, telefone, CPF e e-mail e continua para o Início.
+3.2 Agendar
+Escolhe produto (pelo Início, pela página do produto ou dentro do assistente).
+Escolhe dia e hora.
+Escolhe o local. Em casa, preenche o endereço completo com CEP e ponto de referência.
+Anexa fotos (opcional).
+Revisa, escreve um recado (opcional) e envia.
+O pedido nasce com status PENDENTE.
+O sistema só grava o pedido se todas as condições forem verdadeiras ao mesmo tempo, no servidor:
+o usuário logado tem cadastro de cliente;
+o local é "PRESENCIAL" ou "DOMICILIO";
+se for em domicílio, o produto escolhido atende em domicílio;
+o dia da semana da data está ativo na agenda de atendimento;
+o número de pedidos PENDENTE ou CONFIRMADO naquela data e hora é menor que as vagas por horário da empresa.
+Se alguma condição falhar, nada é gravado e o app avisa.
+A antecedência mínima e o encaixe da hora na grade são garantidos só pela tela, na geração das horas.
+3.3 Status do pedido
+Status	Etiqueta	Cor	Texto de ajuda ao cliente
+PENDENTE	Aguardando análise	aviso	Recebemos seu pedido. Um consultor vai analisar em breve.
+CONFIRMADO	Confirmado	sucesso	Tudo certo. Seu atendimento está confirmado.
+SUGERIDO	Novo horário sugerido	informação	O consultor sugeriu outro horário. Veja e responda abaixo.
+RECUSADO	Recusado	perigo	Não foi possível atender este pedido. Você pode fazer um novo.
+CANCELADO	Cancelado	neutro	Este pedido foi cancelado.
+Pedido ativo: PENDENTE, CONFIRMADO ou SUGERIDO.
+
+3.4 Decisão do consultor
+Só quem está na lista de consultores pode decidir.
+Ações: CONFIRMAR (status CONFIRMADO), RECUSAR (status RECUSADO) e SUGERIR (status SUGERIDO, exigindo nova data e nova hora preenchidas).
+Só atua sobre pedidos em PENDENTE, CONFIRMADO ou SUGERIDO.
+O recado do consultor é opcional e fica gravado no pedido. Em CONFIRMAR e RECUSAR a nova data e hora são limpas.
+Toda decisão atualiza a data de atualização do pedido.
+3.5 Aceitar a sugestão (cliente)
+Só o dono do pedido, só no status SUGERIDO e só se houver nova data.
+A data e a hora do pedido passam a ser a nova data e a nova hora, a sugestão é limpa e o status vira CONFIRMADO.
+A aceitação não confere de novo a lotação do novo horário.
+3.6 Cancelamento (cliente)
+Só o dono, só em PENDENTE, CONFIRMADO ou SUGERIDO.
+Status vira CANCELADO. O horário volta a ficar livre, porque só PENDENTE e CONFIRMADO ocupam vaga.
+3.7 Documentos
+Cada foto é um registro ligado ao pedido: nome do arquivo, tipo (sempre JPEG) e conteúdo em texto codificado.
+Anexar: só o dono do pedido. Limite de 8 fotos por pedido no servidor.
+No assistente o limite é 6 fotos. No detalhe do pedido cada envio aceita até 6 arquivos por vez.
+Se o limite do pedido estoura: "Limite de fotos atingido neste pedido."
+Listar: dono do pedido ou qualquer consultor.
+3.8 Produtos que atendem em casa
+Marcados com o selo "Atende em casa": Crédito consignado, FGTS e saque-aniversário, Abertura de conta BB e Crédito pela conta de luz.
+O servidor bloqueia "Em casa" para os demais produtos, além da tela.
+A empresa pode desligar o atendimento em domicílio em geral, na aba Empresa; com isso, "Em casa" some para todos os produtos.
+3.9 Navegação do celular (o app não fecha ao voltar)
+Cada passo do assistente, a janela de cancelamento e o modo de sugerir horário são entradas do histórico do navegador. O botão voltar do celular retrocede dentro do app.
+Guarda de saída: quando o app é aberto como a primeira entrada do histórico, o app insere uma entrada de proteção. Se o cliente voltar além do primeiro ponto, vai para o Início e aparece o aviso "Você já está no início. Use o botão Sair para encerrar."
+Os botões "Voltar" das páginas usam o histórico quando existe e, se não existir, vão para uma rota padrão da seção, sem fechar o app.
+3.10 Consultor inicial
+Não existe tela de auto-promoção a consultor.
+O primeiro consultor é gravado diretamente no banco: o usuário do dono do app (Fernando Silva, fernandotarginodasilva@gmail.com).
+Novos consultores são adicionados pelo consultor atual (aba Equipe), pelo e-mail, desde que a pessoa já tenha entrado uma vez.
+3.11 Mensagens de erro
+Toda chamada que falha mostra aviso ou bloco de erro com a mensagem em português. Nenhuma tela fica vazia sem explicação.
+4. Banco de dados (PostgreSQL)
+Convenções: nomes em minúsculas; chaves automáticas por sequência (SERIAL); sem gatilhos nem procedimentos. O dono do registro é o usuario_id (UUID) da conta logada.
+
+4.1 administradores (consultores)
+usuario_id UUID, chave primária.
+criado_em timestamp, padrão agora.
+4.2 empresa (uma única linha, id = 1)
+id inteiro, chave primária (sempre 1).
+nome texto, obrigatório.
+telefone texto.
+endereco texto.
+mensagem texto (boas-vindas).
+duracao_min inteiro, obrigatório, padrão 30.
+vagas_por_horario inteiro, obrigatório, padrão 1.
+antecedencia_horas inteiro, obrigatório, padrão 2.
+atende_domicilio booleano, obrigatório, padrão verdadeiro.
+Dados atuais: nome "CREDMAISPLUS", telefone "(11) 99999-0000", endereço "Rua Exemplo, 100, Centro", mensagem "Atendimento com hora marcada, sem filas e sem enrolação.", 30 min, 1 vaga, 2 h de antecedência, atende em domicílio.
+
+4.3 horarios_atendimento (sete linhas fixas)
+dia_semana inteiro, chave primária. 0 = domingo até 6 = sábado.
+ativo booleano, obrigatório, padrão falso.
+inicio texto "HH:MM", obrigatório, padrão "09:00".
+fim texto "HH:MM", obrigatório, padrão "18:00".
+pausa_inicio texto "HH:MM", opcional.
+pausa_fim texto "HH:MM", opcional.
+Dados atuais:
+
+Domingo: inativo, 09:00 às 13:00.
+Segunda a sexta: ativos, 09:00 às 18:00, pausa 12:00 às 13:00.
+Sábado: ativo, 09:00 às 13:00, sem pausa.
+4.4 produtos
+id serial, chave primária.
+slug texto, obrigatório.
+nome texto, obrigatório.
+subtitulo texto.
+resumo texto.
+para_quem texto.
+documentos texto, com itens separados pelo caractere |.
+icone texto, nome de ícone (ver tabela abaixo).
+ordem inteiro, obrigatório, padrão 0.
+ativo booleano, obrigatório, padrão verdadeiro.
+atende_domicilio booleano, obrigatório, padrão falso.
+Ícones por nome: Landmark, Wallet, Car, Home, PiggyBank, CreditCard, Building2, Users, Zap (da biblioteca lucide-react). Nome desconhecido cai num ícone padrão.
+
+Os 9 produtos, na ordem, com o texto exato:
+
+Crédito consignado (consignado, ícone Landmark, atende em casa: sim)
+
+Subtítulo: INSS e servidores públicos.
+Resumo: Empréstimo com parcelas descontadas direto do benefício ou do salário. As taxas costumam ser as menores do mercado e as parcelas cabem no orçamento.
+Para quem: Aposentados e pensionistas do INSS, servidores públicos federais, estaduais e municipais e alguns trabalhadores de empresas conveniadas.
+Documentos: Documento com foto (RG ou CNH) | CPF | Último contracheque ou extrato do benefício do INSS | Comprovante de residência recente.
+Empréstimo pessoal (pessoal, ícone Wallet, em casa: não)
+
+Subtítulo: Dinheiro rápido para o que você precisar.
+Resumo: Crédito sem precisar explicar o destino do dinheiro. Você escolhe o valor e o prazo e paga em parcelas fixas.
+Para quem: Quem tem renda comprovada e quer resolver uma necessidade pessoal, quitar dívidas mais caras ou organizar as contas.
+Documentos: Documento com foto (RG ou CNH) | CPF | Comprovante de renda dos últimos 3 meses | Comprovante de residência recente.
+Financiamento de veículo (veiculo, ícone Car, em casa: não)
+
+Subtítulo: Carro ou moto com parcelas que cabem.
+Resumo: Financie veículo novo ou usado com entrada reduzida e prazo longo. Simulamos as melhores condições entre vários bancos.
+Para quem: Quem quer comprar carro ou moto, ou trocar o atual, com renda comprovada e nome em boa situação.
+Documentos: Documento com foto (RG ou CNH) | CPF | Comprovante de renda | Comprovante de residência recente | Dados do veículo (modelo, ano e valor).
+Crédito com garantia de imóvel (imovel, ícone Home, em casa: não)
+
+Subtítulo: Valores altos com a menor taxa.
+Resumo: Use um imóvel seu como garantia e consiga valores maiores, prazos de até 20 anos ou mais e taxas bem menores que as do crédito comum.
+Para quem: Proprietários de imóvel quitado ou financiado que precisam de um valor alto para investir, reformar ou organizar a vida financeira.
+Documentos: Documento com foto (RG ou CNH) | CPF | Matrícula atualizada do imóvel | Comprovante de renda | Comprovante de residência recente.
+FGTS e saque-aniversário (fgts, ícone PiggyBank, em casa: sim)
+
+Subtítulo: Antecipe o dinheiro do seu FGTS.
+Resumo: Receba agora, de uma vez, os valores do saque-aniversário que cairiam nos próximos anos, sem sair da sua conta do FGTS.
+Para quem: Trabalhadores com carteira assinada que aderiram, ou querem aderir, ao saque-aniversário do FGTS.
+Documentos: Documento com foto (RG ou CNH) | CPF | Carteira de trabalho digital ou extrato do FGTS | Dados bancários (agência e conta).
+Cartão de crédito consignado (cartao, ícone CreditCard, em casa: não)
+
+Subtítulo: Cartão com desconto em folha.
+Resumo: Cartão com limite exclusivo e fatura descontada direto do benefício ou do salário, com saque complementar disponível.
+Para quem: Aposentados e pensionistas do INSS e servidores públicos que querem um cartão com condições especiais.
+Documentos: Documento com foto (RG ou CNH) | CPF | Contracheque ou extrato do benefício do INSS | Comprovante de residência recente.
+Abertura de conta BB (conta-bb, ícone Building2, em casa: sim)
+
+Subtítulo: Abra sua conta no Banco do Brasil com ajuda.
+Resumo: Abrimos sua conta no Banco do Brasil com acompanhamento de um consultor, do cadastro à ativação, sem filas e sem burocracia.
+Para quem: Quem ainda não tem conta no Banco do Brasil ou quer abrir uma conta nova, para receber salário, benefício ou movimentar o dia a dia.
+Documentos: Documento com foto (RG ou CNH) | CPF | Comprovante de residência recente | Comprovante de renda, se tiver.
+Crédito Bolsa Família (bolsa-familia, ícone Users, em casa: não)
+
+Subtítulo: Crédito para quem recebe o benefício.
+Resumo: Atendimento para quem recebe o Bolsa Família e quer conhecer as opções de crédito disponíveis. O consultor explica as condições antes de qualquer contratação.
+Para quem: Beneficiários do Bolsa Família que querem entender as condições de crédito disponíveis para o seu perfil.
+Documentos: Documento com foto (RG ou CNH) | CPF | Cartão ou extrato do benefício | Comprovante de residência recente.
+Crédito pela conta de luz (conta-luz, ícone Zap, em casa: sim)
+
+Subtítulo: Crédito usando o histórico da sua conta de energia.
+Resumo: Crédito com análise feita a partir da sua conta de energia elétrica. Em muitos casos a aprovação é mais simples do que no crédito tradicional.
+Para quem: Titulares de conta de luz em dia que querem crédito com uma análise mais simples.
+Documentos: Documento com foto (RG ou CNH) | CPF | Última conta de luz em seu nome | Comprovante de residência recente.
+4.5 clientes
+id serial, chave primária.
+usuario_id UUID, obrigatório, único (um cadastro por usuário).
+nome, telefone, cpf e email, textos obrigatórios.
+Há ainda colunas de controle de data de criação e de atualização.
+Relacionamento: um cliente tem muitos agendamentos.
+4.6 agendamentos
+id serial, chave primária.
+cliente_id inteiro, obrigatório, chave estrangeira para clientes.id.
+usuario_id UUID, obrigatório (dono; usado nas regras de acesso).
+produto_id inteiro, obrigatório, chave estrangeira para produtos.id.
+data_agendada data, obrigatório.
+hora texto "HH:MM", obrigatório.
+local_tipo texto, obrigatório, padrão "PRESENCIAL"; valores: PRESENCIAL ou DOMICILIO.
+cep, logradouro, numero, complemento, bairro, cidade, uf, referencia: textos opcionais, preenchidos quando o local é DOMICILIO (CEP guardado com ou sem máscara conforme enviado).
+observacao texto opcional (recado do cliente).
+status texto, obrigatório, padrão "PENDENTE"; valores: PENDENTE, CONFIRMADO, SUGERIDO, RECUSADO, CANCELADO.
+nova_data data opcional e nova_hora texto opcional (sugestão do consultor).
+mensagem_consultor texto opcional.
+criado_em e atualizado_em: datas e horas, obrigatórias, padrão agora.
+Relacionamentos: pertence a um cliente e a um produto; tem muitos documentos.
+4.7 documentos
+id serial, chave primária.
+agendamento_id inteiro, obrigatório, chave estrangeira para agendamentos.id.
+nome texto opcional.
+mime texto opcional (sempre image/jpeg).
+conteudo texto, obrigatório: a imagem inteira em data URL.
+criado_em data e hora, obrigatória, padrão agora.
+4.8 Visão do sistema INT_USER
+Somente leitura, fornecida pela plataforma, com user_id, email, access_level e enabled. É usada para achar o usuário por e-mail ao adicionar consultor e para ler o e-mail da conta logada.
+
+4.9 Funções de servidor (20, todas em SQL, privadas)
+Todas usam o usuário logado (:VAR_USER, convertido para UUID) como identidade. Retornam as linhas na resposta. Listagens usam limite e deslocamento.
+
+perfil_obter: dados do cliente logado, se é consultor e o e-mail da conta.
+perfil_salvar: cria ou atualiza o cadastro (upsert por usuario_id).
+empresa_obter: linha da empresa.
+horarios_listar: sete dias.
+produtos_listar: produtos ativos, ordenados por ordem.
+ocupados_listar: contagem por data e hora de pedidos PENDENTE e CONFIRMADO em um intervalo de datas.
+agendamento_criar: cria o pedido se todas as condições do 3.2 forem verdadeiras.
+meus_agendamentos: pedidos do usuário logado, mais recentes primeiro, com produto, ícone, sugestão, recado, endereço e contagem de fotos; filtro opcional por id; paginado.
+agendamento_cancelar: cancelamento pelo dono.
+sugestao_aceitar: aceite pelo dono.
+documento_anexar: anexar foto ao pedido do dono, limite de 8.
+documentos_listar: fotos do pedido, para o dono ou consultor.
+admin_agendamentos: lista para consultores, com dados do cliente e contagem de fotos; filtros por status e por id; ordenação com PENDENTE primeiro, depois data e hora; paginado; devolve também o total.
+admin_contadores: quantidade de pedidos por status.
+admin_decidir: confirmar, recusar ou sugerir (3.4).
+admin_empresa_salvar: salva os dados e regras da empresa.
+admin_horarios_salvar: salva os sete dias de uma vez.
+admin_admins_listar: consultores com e-mail e indicação de qual é o usuário atual.
+admin_admin_adicionar: dá acesso de consultor a quem já entrou no app, pelo e-mail (sem diferença entre maiúsculas e minúsculas), e só se quem pede já é consultor.
+admin_admin_remover: remove o acesso de outro consultor.
+Toda função de consultor confere dentro da própria consulta que o usuário logado está em administradores.
+
+5. Autenticação, permissões e integrações
+5.1 Autenticação
+Entradas: Google, Microsoft e código por e-mail (6 dígitos, enviado pela plataforma; o link do mesmo e-mail também conclui a entrada).
+Senha desligada. Código por e-mail e senha nunca ficam ligados ao mesmo tempo, e o app usa o código.
+Facebook não existe na plataforma e não foi implementado.
+Cadastro aberto ligado: qualquer pessoa com o link cria conta.
+Sair: encerra a sessão local e leva ao login.
+O login usa os métodos prontos da plataforma. Nunca grave senha nem crie tabela de usuários própria.
+5.2 Papéis e permissões
+Papel	Como se define	Pode
+Cliente	Qualquer conta logada com cadastro de cliente	Ver produtos e horários; criar, ver, cancelar e aceitar sugestão dos próprios pedidos; anexar e ver fotos dos próprios pedidos; editar os próprios dados
+Consultor	Presença em administradores	Tudo o que o cliente faz, mais: ver todos os pedidos e fotos; confirmar, recusar e sugerir; configurar horários e empresa; gerir a equipe de consultores
+Um cliente nunca vê pedido de outro: as consultas filtram por usuario_id.
+A tela de consultor também redireciona quem não é consultor, mas a proteção real está no servidor.
+5.3 Integrações externas
+ViaCEP, API pública (viacep.com.br/ws/{cep}/json), chamada direto do navegador para preencher o endereço. Falha silenciosa; o cliente preenche à mão.
+WhatsApp: abertura de conversa pelo link wa.me/55{telefone}, acionada pelo consultor. Não há integração de envio.
+Sem inteligência artificial: o app não contém nenhum recurso de IA.
+Sem pagamento, sem notificação por e-mail do app e sem SMS. O único e-mail enviado é o código de login, que é da plataforma.
+5.4 Limites da hospedagem atual
+O app está na máquina gratuita da plataforma, que comporta 2 usuários com login, contando o dono. Esse limite já está ocupado. Para mais clientes é preciso trocar o plano e a máquina do app; isso não se resolve no código.
+6. Critérios de aceite
+Em 390 px de largura não há rolagem horizontal em nenhuma tela. Só a faixa de dias e as abas rolam, cada uma dentro do próprio contêiner.
+O botão voltar do celular nunca fecha o app dentro do fluxo.
+Um segundo cliente tentando o mesmo horário já lotado é recusado.
+"Em casa" é impossível para produtos que não atendem em casa, mesmo por chamada direta ao servidor.
+Todo texto está em português, com acentos.
+A verificação de design não encontra tamanhos de fonte fixos em pixels, cores fora das variáveis do tema, espaçamentos acima da escala nem grades que não colapsam no celular.
+A compilação com verificação de tipos passa sem erros e sem importações sem uso.

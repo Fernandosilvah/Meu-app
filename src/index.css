@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Figtree', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --color-primary: #1A5FD6;
+  --color-primary-hover: #1450B8;
+  --color-on-primary: #FFFFFF;
+  --color-primary-text: #1A5FD6;
+  --color-primary-bg: #E8F0FD;
+  --color-navy: #061A45;
+  --color-navy-soft: #0D2A66;
+  --color-on-navy: #FFFFFF;
+  --color-page-bg: #F3F6FC;
+  --color-surface: #FDFDFE;
+  --color-border-custom: #E3E6EC;
+  --color-text-main: #0D0F14;
+  --color-text-muted: #5B6472;
+
+  --color-status-success-text: #0F7A52;
+  --color-status-success-bg: #E9F7F1;
+  --color-status-success-border: #A9DFC7;
+
+  --color-status-danger-text: #C62F2A;
+  --color-status-danger-bg: #FDF0EF;
+  --color-status-danger-border: #F6C3C0;
+
+  --color-status-warning-text: #9A6A0F;
+  --color-status-warning-bg: #FDF6E7;
+  --color-status-warning-border: #F0DBA6;
+
+  --color-status-info-text: #1F66C4;
+  --color-status-info-bg: #EEF4FD;
+  --color-status-info-border: #C3D8F7;
+}
+
+:root {
+  --primary: #1A5FD6;
+  --primary-hover: #1450B8;
+  --on-primary: #FFFFFF;
+  --primary-text: #1A5FD6;
+  --primary-bg: #E8F0FD;
+  --navy: #061A45;
+  --navy-soft: #0D2A66;
+  --on-navy: #FFFFFF;
+  --page-bg: #F3F6FC;
+  --surface: #FDFDFE;
+  --border: #E3E6EC;
+  --text: #0D0F14;
+  --text-secondary: #5B6472;
+
+  --success-text: #0F7A52;
+  --success-bg: #E9F7F1;
+  --success-border: #A9DFC7;
+
+  --danger-text: #C62F2A;
+  --danger-bg: #FDF0EF;
+  --danger-border: #F6C3C0;
+
+  --warning-text: #9A6A0F;
+  --warning-bg: #FDF6E7;
+  --warning-border: #F0DBA6;
+
+  --info-text: #1F66C4;
+  --info-bg: #EEF4FD;
+  --info-border: #C3D8F7;
+
+  font-family: 'Figtree', sans-serif;
+  font-size: 14px;
+}
+
+/* Hide all scrollbars globally for native app look & feel */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+html, body, #root {
+  overflow-x: hidden !important;
+  overscroll-behavior-x: none !important;
+  -webkit-overflow-scrolling: touch;
+  max-width: 100vw;
+  width: 100%;
+}
+
+/* Custom soft shadow for borderless cards */
+.card-shadow {
+  box-shadow: 0 2px 10px rgba(6, 26, 69, 0.05), 0 1px 3px rgba(6, 26, 69, 0.03);
+}
+
+.card-shadow-hover {
+  box-shadow: 0 4px 16px rgba(6, 26, 69, 0.08), 0 2px 6px rgba(6, 26, 69, 0.04);
+}
+
+/* Smooth custom scrollbars for days row & tabs */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
